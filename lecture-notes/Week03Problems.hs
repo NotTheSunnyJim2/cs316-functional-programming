@@ -13,14 +13,15 @@ import Data.Char
    <something>', and so on. -}
 
 mulBy2 :: Int -> Int
-mulBy2 x = 2*x
+mulBy2 = \x -> 2*x
 
 mul :: Int -> Int -> Int
-mul x y = x * y
+mul = \x y -> x * y
 
 invert :: Bool -> Bool
-invert True  = False
-invert False = True
+invert = \x -> case x of
+   True -> False
+   False -> True
   {- HINT: use a 'case', or an 'if'. -}
 
 
@@ -30,8 +31,9 @@ invert False = True
    Int'. (a) What is the type of the Haskell expression:
 
        mul 10
+       Answer: mul 10 :: Int -> Int
 
-   (b) what is 'mul 10'? How can you use it to multiply a number? -}
+   (b) what is 'mul 10'? How can you use it to multiply a number? Multiply any number by 10 e.g (mul 10) 5 = 50 -}
 
 
 {- 3. Partial Application
@@ -40,7 +42,7 @@ invert False = True
    function as short as possible? -}
 
 double_v2 :: Int -> Int
-double_v2 = undefined -- fill this in
+double_v2 = mul 2 
 
 {- 4. Using 'map'.
 
@@ -63,7 +65,7 @@ double_v2 = undefined -- fill this in
 -}
 
 shout :: String -> String    -- remember that String = [Char]
-shout = undefined
+shout = map toUpper
 
 
 {- 5. Using 'map' with another function.
@@ -87,7 +89,8 @@ shout = undefined
    into two element lists. -}
 
 dupAll :: [a] -> [a]
-dupAll = undefined
+dupAll xs = concat (map (\x -> [x,x]) xs)
+
 
 
 {- 6. Using 'filter'
@@ -101,14 +104,19 @@ dupAll = undefined
        's' and counts the number of 'c's in 's'. -}
 
 onlyEs :: String -> String
-onlyEs = undefined
+onlyEs = filter (\x -> x == 'E') 
 
 numberOfEs :: String -> Int
-numberOfEs = undefined
+numberOfEs xs = length (onlyEs xs)
 
 numberOf :: Char -> String -> Int
-numberOf = undefined
+numberOf c s = length (filter (\x -> x == c) s)
 
+{- or 
+numberOf :: Char -> String -> Int
+numberOf c = length . filter (\x -> x == c)
+
+-}
 
 {- 7. Rewriting 'filter'
 
@@ -120,11 +128,15 @@ numberOf = undefined
 -}
 
 filter_v2 :: (a -> Bool) -> [a] -> [a]
-filter_v2 = undefined
+filter_v2 f = concat . map (\x -> if f x then [x] else []) 
 
 filterMap :: (a -> Maybe b) -> [a] -> [b]
-filterMap = undefined
+filterMap f = concat . map (\x -> case f x of
+                                    Nothing -> []
+                                    Just y -> [y]) 
 
+safeEven :: Int -> Maybe Int
+safeEven x = if even x then Just x else Nothing
 
 {- 8. Composition
 
@@ -136,8 +148,18 @@ filterMap = undefined
    this week. -}
 
 (>>>) :: (a -> b) -> (b -> c) -> a -> c
-(>>>) = undefined
+(>>>) f g x = g (f x) 
 
+-- Simple numeric functions
+addOne :: Int -> Int
+addOne x = x + 1
+
+double :: Int -> Int
+double x = x * 2
+
+-- Test cases
+test1 = (addOne >>> double) 3      -- Should return 8
+test2 = (double >>> addOne) 3      -- Should return 7
 {- Try rewriting the 'numberOfEs' function from above using this one. -}
 
 {- 9. Backwards application
@@ -147,7 +169,7 @@ filterMap = undefined
    its arguments in reverse order to normal function application! -}
 
 (|>) :: a -> (a -> b) -> b
-(|>) x f = undefined
+(|>) x f = f x
 
 
 {- This function can be used between its arguments like so:
@@ -167,7 +189,7 @@ filterMap = undefined
    arguments in reverse order: -}
 
 flip :: (a -> b -> c) -> b -> a -> c
-flip  = undefined
+flip f b a = f a b
 
 {- 11. Evaluating Formulas
 
@@ -192,8 +214,10 @@ data Formula
 -}
 
 eval_v1 :: Formula -> Bool
-eval_v1 = undefined
-
+eval_v1 (Atom a) = True
+eval_v1 (And p q) = (eval_v1 p) && (eval_v1 q)
+eval_v1 (Or p q) = (eval_v1 p) || (eval_v1 q)
+eval_v1 (Not p) = not (eval_v1 p)
 
 
 
@@ -202,7 +226,10 @@ eval_v1 = undefined
        for each atomic proposition: -}
 
 eval :: (String -> Bool) -> Formula -> Bool
-eval = undefined
+eval v (Atom a) = v a 
+eval v (And a b) = eval v a && eval v b
+eval v (Or a b) = eval v a || eval v b
+eval v (Not p) = not (eval v p)
 
 {- For example:
 
@@ -217,7 +244,11 @@ eval = undefined
    formulas in a Formula with whatever 'f' tells it to: -}
 
 subst :: (String -> Formula) -> Formula -> Formula
-subst = undefined
+subst v (Atom a) = v a 
+subst v (And p q) = subst v p `And` subst v q
+subst v (Or p q) = subst v p `Or` subst v q
+subst v (Not p) = Not (subst v p)
+
 
 {- For example:
 
@@ -233,4 +264,61 @@ subst = undefined
    give a 'Bool' for the whole formula. -}
 
 evalMaybe :: (String -> Maybe Bool) -> Formula -> Maybe Bool
-evalMaybe = undefined
+evalMaybe v (Atom a)  = v a
+evalMaybe v (And p q) =
+  case evalMaybe v p of
+    Nothing -> Nothing
+    Just x ->
+      case evalMaybe v q of
+        Nothing -> Nothing
+        Just y ->
+          Just (x && y)
+evalMaybe v (Or p q) =
+  case evalMaybe v p of
+    Nothing -> Nothing
+    Just x ->
+      Just (not x)
+
+
+-- Add after the evalMaybe function:
+
+-- Test lookup functions
+alwaysNothing :: String -> Maybe Bool
+alwaysNothing _ = Nothing
+
+onlyA :: String -> Maybe Bool
+onlyA "A" = Just True
+onlyA _   = Nothing
+
+aAndB :: String -> Maybe Bool
+aAndB "A" = Just True
+aAndB "B" = Just False
+aAndB _   = Nothing
+
+-- Test formulas
+simpleAtom :: Formula
+simpleAtom = Atom "A"
+
+simpleAnd :: Formula
+simpleAnd = And (Atom "A") (Atom "B")
+
+simpleOr :: Formula
+simpleOr = Or (Atom "A") (Atom "B")
+
+complexFormula :: Formula
+complexFormula = And (Or (Atom "A") (Not (Atom "B"))) (Atom "C")
+
+-- Test cases
+testEvalMaybe :: [(String, Maybe Bool)]
+testEvalMaybe =
+  [ ("Test 1: Simple atom with Just", evalMaybe onlyA simpleAtom)                     -- Should return Just True
+  , ("Test 2: Simple atom with Nothing", evalMaybe alwaysNothing simpleAtom)         -- Should return Nothing
+  , ("Test 3: AND with one Nothing", evalMaybe onlyA simpleAnd)                      -- Should return Nothing
+  , ("Test 4: AND with both values", evalMaybe aAndB simpleAnd)                      -- Should return Just False
+  , ("Test 5: OR with one Nothing", evalMaybe onlyA simpleOr)                        -- Should return Nothing
+  , ("Test 6: Complex formula", evalMaybe aAndB complexFormula)                      -- Should return Nothing
+  ]
+
+-- Helper function to run tests
+runEvalMaybeTests :: IO ()
+runEvalMaybeTests = mapM_ (\(desc, result) -> putStrLn $ desc ++ ": " ++ show result) testEvalMaybe
