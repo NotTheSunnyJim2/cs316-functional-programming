@@ -29,24 +29,36 @@ The notes are Haskell files with interleaved code and commentary. You are encour
 - [Tutorial Solutions](lecture-notes/Week01Solutions.hs)
 - [Live Lecture code (Tuesday)](lecture-notes/Week01Live.hs)
 - [Live Lecture code (Friday)](lecture-notes/Week01Live2.hs)
-- [Week 2](lecture-notes/Week02.hs) : Solving Problems by Recursion
-  - [Tutorial Problems](lecture-notes/Week02Problems.hs)
-  - [Tutorial Solutions](lecture-notes/Week02Solutions.hs)
-<!--  - [Live Lecture code (Friday)](lecture-notes/Week02Live.hs)
-!-->
-- [Week 3](lecture-notes/Week03.hs) : Higher Order Functions
-  - [Tutorial Problems](lecture-notes/Week03Problems.hs)
-  - [Tutorial Solutions](lecture-notes/Week03Solutions.hs)
-<!--
-  - [Live Lecture code (Tuesday)](lecture-notes/Week03Live.hs)
-- [Week 4](lecture-notes/Week04.hs) : Patterns of Recursion
-  - [Tutorial Problems](lecture-notes/Week04Problems.hs)
-  - [Tutorial Solutions](lecture-notes/Week04Solutions.hs)
-  - [Live Lecture code (Tuesday and Friday)](lecture-notes/Week04Live.hs)
+
+### Week 2
+
+- [Lecture notes](lecture-notes/Week02.hs) : Solving Problems by Recursion
+- [Tutorial Problems](lecture-notes/Week02Problems.hs)
+- [Tutorial Solutions](lecture-notes/Week02Solutions.hs)
+- [Live Lecture code (Friday)](lecture-notes/Week02Live.hs)
+
+### Week 3
+
+- [Lecture notes](lecture-notes/Week03.hs) : Higher Order Functions
+- [Tutorial Problems](lecture-notes/Week03Problems.hs)
+- [Tutorial Solutions](lecture-notes/Week03Solutions.hs)
+- [Live Lecture code (Tuesday)](lecture-notes/Week03Live.hs)
+- [Live Lecture code (Friday)](lecture-notes/Week03LiveFri.hs)
+
+### Week 4
+
+- [Lecture notes](lecture-notes/Week04.hs) : Patterns of Recursion
+- [Tutorial Problems](lecture-notes/Week04Problems.hs)
+- [Tutorial Solutions](lecture-notes/Week04Solutions.hs)
+- [Live Lecture code (Tuesday and Friday)](lecture-notes/Week04Live.hs)
+
+### Week 5
 - [Week 5](lecture-notes/Week05.hs) : Classes of Types
-  - [Tutorial Problems](lecture-notes/Week05Problems.hs)
-  - [Tutorial Solutions](lecture-notes/Week05Solutions.hs)
-  - [Live Lecture Notes (Tuesday and Friday)](lecture-notes/Week05Live.hs)
+- [Tutorial Problems](lecture-notes/Week05Problems.hs)
+- [Tutorial Solutions](lecture-notes/Week05Solutions.hs)
+
+<!--
+- [Live Lecture Notes (Tuesday and Friday)](lecture-notes/Week05Live.hs)
 - [Week 6](lecture-notes/Week06.hs) : Simulating side-effects: Exceptions, State, and Printing
   - [Tutorial Problems](lecture-notes/Week06Problems.hs)
   - [Tutorial Solutions](lecture-notes/Week06Solutions.hs)
