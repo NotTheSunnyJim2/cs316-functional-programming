@@ -20,7 +20,7 @@ listIdentity (x:xs) = x : listIdentity xs
 {- Write this function as a 'foldr' (fill in the 'undefined's): -}
 
 listIdentity' :: [a] -> [a]
-listIdentity' = foldr undefined undefined
+listIdentity' = foldr (\x r -> x : r) []
 
 {- 2. The following recursive function does a map and a filter at the
       same time. If the function argument sends an element to
@@ -30,13 +30,14 @@ listIdentity' = foldr undefined undefined
 mapFilter :: (a -> Maybe b) -> [a] -> [b]
 mapFilter f [] = []
 mapFilter f (x:xs) = case f x of
-                       Nothing -> mapFilter f xs
-                       Just b  -> b : mapFilter f xs
+                       Nothing -> (mapFilter f xs)
+                       Just b  -> b : (mapFilter f xs)
 
 {- Write this function as a 'foldr' by replacing the 'undefined's: -}
 
 mapFilter' :: (a -> Maybe b) -> [a] -> [b]
-mapFilter' f xs = foldr undefined undefined xs
+mapFilter' f xs = foldr (\x r -> case f x of Nothing -> r
+                                             Just b -> b : r) [] xs
 
 
 
@@ -60,12 +61,12 @@ decodeBinaryDigit _   = Nothing
       using 'foldr', 'reverse' and a '\' function: -}
 
 foldlFromFoldrAndReverse :: (b -> a -> b) -> b -> [a] -> b
-foldlFromFoldrAndReverse f x xs = undefined
+foldlFromFoldrAndReverse f x xs = foldr (\a b -> f b a) x (reverse xs)
 
 {-   Much harder: define 'foldl' just using 'foldr' and a '\' function: -}
 
 foldlFromFoldr :: (b -> a -> b) -> b -> [a] -> b
-foldlFromFoldr f x xs = undefined
+foldlFromFoldr f x xs = foldr undefined undefined xs x
 
 
 {- 4. The following is a datatype of Natural Numbers (whole numbers
@@ -83,12 +84,15 @@ data Nat
 {- HINT: think about proofs by induction. A proof by induction has a
    base case and a step case. -}
 
+foldNat :: (b -> b) -> b -> Nat -> b
+foldNat succ zero Zero = zero
+foldNat succ zero (Succ n) = succ (foldNat succ zero n)
 
 {- 5. Write a list comprehension to generate all the cubes (x*x*x) of
       the numbers 1 to 10: -}
 
 cubes :: [Int]
-cubes = undefined
+cubes = [x * x * x | x <- [1..10]]
 
 
 {- 6. The replicate function copies a single value a fixed number of
@@ -100,7 +104,7 @@ cubes = undefined
       Write a version of replicate using a list comprehension: -}
 
 replicate' :: Int -> a -> [a]
-replicate' = undefined
+replicate' n a = [a | _ <- [1..n] ]
 
 {- 7. One-pass Average.
 
@@ -129,7 +133,7 @@ avg xs = sumDoubles xs / fromInteger (lenList xs)
    Implement such a function, using foldr: -}
 
 sumAndLen :: [Double] -> (Double, Integer)
-sumAndLen = undefined
+sumAndLen = foldr (\x (d,i) -> ((d + x), (i + 1))) (0,0)
 
 {- Once you have implemented your 'sumAndLen' function, this alternative
    average function will work: -}
@@ -158,7 +162,7 @@ foldTree l n (Node lt x rt) = n (foldTree l n lt) x (foldTree l n rt)
    'foldTree': -}
 
 mapTree :: (a -> b) -> Tree a -> Tree b
-mapTree = undefined
+mapTree f = foldTree Leaf (\l x r -> Node l (f x) r) 
 
 {- Here is the explicitly recursive version of 'mapTree', for
    reference: -}
@@ -171,4 +175,4 @@ mapTree0 f (Node lt x rt) = Node (mapTree0 f lt) (f x) (mapTree0 f rt)
    order: -}
 
 flatten :: Tree a -> [a]
-flatten = undefined
+flatten = foldTree [] (\l x r -> l ++ [x] ++ r)
