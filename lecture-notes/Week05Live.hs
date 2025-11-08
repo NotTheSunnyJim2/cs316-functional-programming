@@ -5,6 +5,8 @@ module Week05Live where
 import Prelude hiding (Semigroup (..), Monoid (..), Foldable (..), Functor (..))
 import Data.Char
 
+import Test.QuickCheck
+
 -- Next week: 28th October: Class Test (1-3pm LT1201, 50%).
 
 ------------------------------------------------------------------------
@@ -144,31 +146,37 @@ class Semigroup m where
 instance Semigroup [a] where
   (<>) = (++)
 
-newtype Tsil a = MkTsil { getTsil :: [a] } deriving Show
+newtype Tsil a = MkTsil { getTsil :: [a] } deriving (Show, Eq, Arbitrary)
 
 instance Semigroup (Tsil a) where
-  MkTsil xs <> MkTsil ys = ys ++ xs
+  MkTsil xs <> MkTsil ys = MkTsil (ys ++ xs)
 
-newtype Empty a = MkEmpty { getEmpty :: [a] } deriving Show
+newtype Empty a = MkEmpty { getEmpty :: [a] } deriving (Show, Eq, Arbitrary)
 
 instance Semigroup (Empty a) where
   _ <> _ = MkEmpty []
 
-newtype Sum = MkSum {getSum :: Int} deriving Show
+newtype Sum = MkSum {getSum :: Int} deriving (Show, Eq, Arbitrary)
 
 instance Semigroup Sum where
   MkSum n <> MkSum m = MkSum (n + m)
 
-newtype Prod = MkProd {getProd :: Int} deriving Show
+newtype Prod = MkProd {getProd :: Int} deriving (Show, Eq, Arbitrary)
 
 instance Semigroup Prod where
   MkProd n <> MkProd m = MkProd (n*m)
 
-newtype Max = MkMax {getMax :: Int} deriving Show
+newtype Max = MkMax {getMax :: Int} deriving (Show, Eq, Arbitrary)
 
 instance Semigroup Max where
   MkMax n <> MkMax m = MkMax (max n m)
 
+{-
+newtype Sub = MkSub { getSub :: Int } deriving (Show, Eq, Arbitrary)
+
+instance Semigroup Sub where
+  MkSub m <> MkSub n = MkSub (m - n)
+-}
 
 -- DEFINE various instances
 
@@ -178,17 +186,52 @@ test :: Semigroup m => (Int -> m) -> m
 test f = f 0 <> f 1 <> f 2
 
 
+-- DEFINE property tests
+
+prop_associative
+  :: (Eq m, Semigroup m)
+  => (Int -> m)
+  -> m -> m -> m -> Bool
+prop_associative f x y z = x <> (y <> z) == (x <> y) <> z
+
+-- DEFINE non-examples (e.g. minus)
 
 
 -- Monoids
 class Semigroup m => Monoid m where
   mempty :: m
 -- DISCUSS laws
+-- DEFINE property tests
 
+prop_neutral
+  :: (Eq m, Monoid m)
+  => (Int -> m)
+  -> m -> Bool
+prop_neutral f x =
+   x == mempty <> x
+   && x <> mempty == x
 
 -- EXTEND previous instances (if possible!)
 
+instance Monoid [a] where
+  mempty = []
 
+instance Monoid (Tsil a) where
+  mempty = MkTsil []
+
+{-
+instance Monoid (Empty a) where
+  mempty = MkEmpty []
+-}
+
+instance Monoid Sum where
+  mempty = MkSum 0
+
+instance Monoid Prod where
+  mempty = MkProd 1
+
+instance Monoid Max where
+  mempty = MkMax minBound -- sneaky!
 
 
 ------------------------------------------------------------------------
@@ -196,15 +239,115 @@ class Semigroup m => Monoid m where
 
 
 -- DEFINE foldList
+foldList :: Monoid m => [m] -> m
+foldList [] = mempty
+foldList (m:ms) = m <> foldList ms
+
+
+prop_foldList :: (Eq m, Monoid m)
+  => (Int -> m)
+  -> [m] -> [m] -> Bool
+prop_foldList f xs ys = foldList (xs <> ys) == foldList xs <> foldList ys
+
+
+newtype First a = MkFirst {getFirst :: Maybe a} deriving Show
+
+
 -- DEFINE First Monoid
--- EXAMPES
+instance Semigroup (First a) where
+  (MkFirst Nothing) <> x = x
+  x <> _ = x
+
+instance Monoid (First a) where
+  mempty = MkFirst Nothing
+
+
+
+-- newtype
+
+-- EXAMPLES
+
+
 
 -- DEFINE Foldable
--- DEFINE various instances
 
+class Foldable t where
+  fold :: Monoid m => t m -> m
+
+data Formula a
+  = Atom a
+  | IsTrue
+  | And (Formula a) (Formula a)
+  deriving (Show, Eq, Arbitrary)
+
+instance Foldable Formula where
+   fold (Atom x)  = foldList [x]
+   fold IsTrue    = foldList []
+   fold (And e f) = foldList [fold e, fold f]
+
+
+-- DEFINE various instances
+mapFormula :: (a -> b) -> Formula a -> Formula b
+mapFormula f (Atom x) = Atom (f x)
+mapFormula f IsTrue   = IsTrue
+mapFormula f (And l r) = And (mapFormula f l) (mapFormula f r)
 
 -- DEFINE Functor
+
+class Functor f where
+  fmap :: (a -> b) -> (f a -> f b)
+
+  -- laws:
+prop_IdentityLaw :: (Eq (f a), Functor f) => (Int -> f Int) -> f a -> Bool
+prop_IdentityLaw _ t = fmap id t == t
+
+prop_CompositionLaw
+  :: (Eq (f c), Functor f)
+  => (Int -> f Int)
+  -> (a -> b) -> (b -> c) -> f a
+  -> Bool
+prop_CompositionLaw _ first second t =
+  fmap second (fmap first t) == fmap (second . first) t
+
 -- DEFINE various instances
 
+instance Functor Formula where
+  fmap = mapFormula
+
+instance Functor [] where
+  fmap = map
 
 -- EXAMPLES foldMap
+
+allVars :: Formula a -> [a]
+allVars f = fold (fmap (\ x -> [x]) f)
+
+foldMap
+  :: (Foldable t, Functor t, Monoid m)
+  => (a -> m) -> t a -> m
+foldMap f t = fold (fmap f t)
+
+allVars' :: Formula a -> [a]
+allVars' = foldMap (\ x -> [x])
+
+myFormula :: Formula String
+myFormula = And (And IsTrue (Atom "first")) (And (Atom "second") (Atom "third"))
+
+countVars :: Formula a -> Int
+countVars = getSum . foldMap (const $ MkSum 1)
+
+newtype And = MkAnd { getAnd :: Bool } deriving (Eq, Show, Ord, Arbitrary)
+
+instance Semigroup And where
+  MkAnd b <> MkAnd c = MkAnd (b && c)
+
+newtype Or = MkOr { getOr :: Bool } deriving (Eq, Show, Ord, Arbitrary)
+
+instance Semigroup Or where
+  MkOr b <> MkOr c = MkOr (b || c)
+
+instance Monoid And where
+  mempty = MkAnd True
+
+isClosed :: Formula a -> Bool
+isClosed = getAnd . foldMap (const $ MkAnd False)
